@@ -1,0 +1,52 @@
+---
+qa_external_trigger_job:
+  stage: qa-external-trigger
+  image: deubertit/cloud-sdk
+  variables:
+    ##########################################
+    ### remote gitlab instance config
+    ##########################################
+    REMOTE_GITLAB_URL: "git.nevercodealone.de"
+    # REMOTE_GITLAB_TRIGGER_TOKEN should be set in ci variables as secret
+    # (requires personal access token or a project access token from remote gitlab instance with the "api" scope)
+    REMOTE_GITLAB_PROJECT_ID: "40"
+    REMOTE_GITLAB_BRANCH: "main"
+    ##########################################
+    ### current project related config
+    ##########################################
+    # PROJECT_API_TOKEN should be set in ci variables as secret, containing a project token with api access in the current gitlab instance and project
+    # BASE_URL: "https://nevercodealone.de"
+    # TESTIFY_CUSTOMER_NAME: "acme-corp"
+    # TESTIFY_CUSTOMER_ENV: "staging"
+  only:
+    variables:
+      - $PROJECT_API_TOKEN
+      - $BASE_URL
+      - $TESTIFY_CUSTOMER_NAME
+      - $TESTIFY_CUSTOMER_ENV
+  script:
+    # call our own gitlab api and get the job id of the post_qa_trigger_job
+    - |
+      export CALLBACK_JOB_ID=$(curl --header "PRIVATE-TOKEN: ${PROJECT_API_TOKEN}" "${CI_API_V4_URL}/projects/$CI_PROJECT_ID/pipelines/$CI_PIPELINE_ID/jobs" | jq '.[] | select(.name=="qa_external_result_job") .id')
+    # with the post_qa_trigger_job job_id, we can construct the callback url the remote gitlab should POST to after success
+    - export CALLBACK_URL="${CI_API_V4_URL}/projects/$CI_PROJECT_ID/jobs/${CALLBACK_JOB_ID}/play"
+    # create json payload
+    - |
+      export CURL_PAYLOAD="{\"ref\": \"${REMOTE_GITLAB_BRANCH}\", \"variables\": [{\"key\": \"TESTIFY_CUSTOMER_NAME\", \"value\": \"$TESTIFY_CUSTOMER_NAME\"},{\"key\" : \"TESTIFY_CUSTOMER_ENV\", \"value\": \"$TESTIFY_CUSTOMER_ENV\"}, {\"key\": \"CALLBACK_URL\", \"value\": \"$CALLBACK_URL\"}, {\"key\": \"BASE_URL\", \"value\": \"$BASE_URL\"}]}"
+    # now trigger the remote gitlab qa pipeline
+    - |
+      curl --request POST \
+           --header "PRIVATE-TOKEN: ${REMOTE_GITLAB_TRIGGER_TOKEN}" \
+           --header "Content-Type: application/json" \
+           --data "$CURL_PAYLOAD" \
+           "https://${REMOTE_GITLAB_URL}/api/v4/projects/${REMOTE_GITLAB_PROJECT_ID}/pipeline"
+
+qa_external_result_job:
+  stage: qa-external-result
+  image: deubertit/cloud-sdk
+  needs: [qa_external_trigger_job]
+  when: manual
+  allow_failure: false
+  script:
+    - echo "received cypress exit code ${cypress_exit_code}"
+    - exit $cypress_exit_code
