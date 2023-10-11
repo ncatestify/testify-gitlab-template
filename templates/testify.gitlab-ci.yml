@@ -20,6 +20,7 @@ qa_external_trigger_job:
     # TESTIFY_CUSTOMER_ENV: "staging"
   only:
     variables:
+      - $REMOTE_GITLAB_TRIGGER_TOKEN
       - $PROJECT_API_TOKEN
       - $BASE_URL
       - $TESTIFY_CUSTOMER_NAME
