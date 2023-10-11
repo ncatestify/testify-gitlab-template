@@ -90,4 +90,17 @@ include:
   - remote: https://git.nevercodealone.de/testify-infrastructure/testify-gitlab-template/-/raw/master/templates/testify.gitlab-ci.yml
 ```
 
-Achtung: Aktuell ist diese gitlab Instanz (noch) nicht für public repositories ausgelegt, das muss angepasst oder ein anderer Ort gefunden werden.
+Erwartete Variablen:
+
+ * ``TESTIFY_CUSTOMER_NAME``
+ 
+ * ``TESTIFY_CUSTOMER_ENV``
+ 
+ * ``BASE_URL``
+ 
+ * ``REMOTE_GITLAB_TRIGGER_TOKEN``
+
+ * ``PROJECT_API_TOKEN``
+
+
+_Achtung: Aktuell ist diese gitlab Instanz (noch) nicht für public repositories ausgelegt, das muss angepasst oder ein anderer Ort gefunden werden._
