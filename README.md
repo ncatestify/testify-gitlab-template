@@ -64,7 +64,7 @@ deploy_job:
   - [..]
  
 include:
-  - remote: https://git.nevercodealone.de/TESTIFY-infrastructure/TESTIFY-gitlab-template/-/raw/master/templates/TESTIFY.gitlab-ci.yml
+  - remote: https://github.com/ncatestify/testify-gitlab-template/blob/main/templates/testify.gitlab-ci.yml
  
 qa_external_trigger_job:
   variables:
